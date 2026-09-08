@@ -239,8 +239,9 @@
   tbody td{
     padding:10px 14px;
     border-bottom:1px solid var(--line);
-    vertical-align:top;
+    vertical-align:middle;
     color:var(--ink);
+    white-space:nowrap;
   }
   tbody tr:hover{background:rgba(201,162,75,0.04);}
   tbody tr:last-child td{border-bottom:none;}
@@ -328,9 +329,6 @@
     font-size:10.5px;
   }
   body.compact-mode .table-wrap{font-size:12px;}
-  body.compact-mode .totals-panel{gap:8px; margin-bottom:12px;}
-  body.compact-mode .totals-card{padding:10px 14px;}
-  body.compact-mode .totals-card .value{font-size:17px;}
   body.compact-mode .party-card{padding:12px 14px;}
   body.compact-mode .member{padding:5px 0;}
   body.compact-mode .gallery-grid{grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:8px;}
@@ -403,7 +401,7 @@
   /* ---------- item icons ---------- */
   .item-cell{display:flex; align-items:center; gap:10px;}
   .item-icon{
-    width:28px; height:28px;
+    width:56px; height:56px;
     image-rendering:pixelated;
     flex-shrink:0;
     background:var(--bg-panel-2);
@@ -411,7 +409,7 @@
     border-radius:2px;
   }
   .item-icon-placeholder{
-    width:28px; height:28px;
+    width:56px; height:56px;
     flex-shrink:0;
     border:1px solid var(--line);
     border-radius:2px;
@@ -421,7 +419,7 @@
   /* ---------- gallery ---------- */
   .gallery-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
     gap:14px;
   }
   .gallery-item{
@@ -433,7 +431,7 @@
   }
   .gallery-item:hover{border-color:var(--line-bright); background:var(--bg-panel-2);}
   .gallery-item img{
-    width:40px; height:40px;
+    width:80px; height:80px;
     image-rendering:pixelated;
     margin-bottom:8px;
   }
@@ -537,53 +535,6 @@
     width:100%;
   }
   .add-member-btn:hover{color:var(--ink); border-color:var(--gold);}
-
-  /* ---------- totals panel ---------- */
-  .totals-panel{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
-    gap:14px;
-    margin-bottom:20px;
-  }
-  .totals-card{
-    border:1px solid var(--line);
-    background:var(--bg-panel);
-    padding:16px 20px;
-  }
-  .totals-card .label{
-    font-family:'Cinzel',serif;
-    font-size:11px;
-    letter-spacing:0.04em;
-    color:var(--ink-dim);
-    margin-bottom:6px;
-  }
-  .totals-card .value{
-    font-family:'Cinzel',serif;
-    font-size:22px;
-    color:var(--gold-bright);
-  }
-  .totals-card .value small{font-size:13px; color:var(--ink-dim); font-family:'Spectral',serif;}
-  .totals-breakdown{
-    border:1px solid var(--line);
-    background:var(--bg-panel);
-    padding:16px 20px;
-    grid-column:1/-1;
-  }
-  .totals-breakdown .label{
-    font-family:'Cinzel',serif;
-    font-size:11px;
-    letter-spacing:0.04em;
-    color:var(--ink-dim);
-    margin-bottom:10px;
-  }
-  .totals-breakdown table{font-size:13px;}
-  .totals-breakdown td, .totals-breakdown th{padding:6px 12px;}
-  .totals-note{
-    font-size:12px;
-    color:var(--ash);
-    font-style:italic;
-    margin:-8px 0 18px;
-  }
 
   /* ---------- party cards ---------- */
   .party-grid{

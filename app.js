@@ -75,7 +75,7 @@ function getItemImageFile(itemName){
 }
 
 function itemIconHtml(itemName, size){
-  size = size || 28;
+  size = size || 56;
   const file = getItemImageFile(itemName);
   if(file){
     return `<img src="${IMG_BASE}${escapeHtml(file)}" alt="" class="item-icon" style="width:${size}px;height:${size}px;" loading="lazy">`;
@@ -339,57 +339,6 @@ let dropsSort = {key:null, dir:1};
 
 const DROP_STATUSES = ["Vendido(a)","Usando","A Venda","Pendente","Aberto(a)","Trocado(a)"];
 
-function renderDropsTotals(){
-  const sold = DROPS.filter(d => (d.status||"").includes("Vendido"));
-  let totalGold = 0, totalRc = 0, unparsed = 0;
-  const byResp = {};
-
-  sold.forEach(d=>{
-    const parsed = parseValor(d.valor);
-    if(!parsed){ if(d.valor) unparsed++; return; }
-    if(parsed.currency === "gold") totalGold += parsed.amount;
-    else totalRc += parsed.amount;
-
-    const resp = d.resp || "—";
-    if(!byResp[resp]) byResp[resp] = {gold:0, rc:0};
-    if(parsed.currency === "gold") byResp[resp].gold += parsed.amount;
-    else byResp[resp].rc += parsed.amount;
-  });
-
-  const panel = document.getElementById("drops-totals");
-  panel.innerHTML = `
-    <div class="totals-card">
-      <div class="label">Total vendido em ouro</div>
-      <div class="value">${formatGold(totalGold)} <small>gold</small></div>
-    </div>
-    <div class="totals-card">
-      <div class="label">Total vendido em Rubini Coin</div>
-      <div class="value">${formatRc(totalRc)}</div>
-    </div>
-    <div class="totals-card">
-      <div class="label">Itens vendidos</div>
-      <div class="value">${sold.length} <small>${unparsed ? `(${unparsed} sem valor legível)` : ""}</small></div>
-    </div>
-    <div class="totals-breakdown">
-      <div class="label">Por responsável</div>
-      <table>
-        <thead><tr><th>Responsável</th><th class="num">Ouro</th><th class="num">Rubini Coin</th></tr></thead>
-        <tbody>
-          ${Object.entries(byResp)
-            .sort((a,b) => (b[1].gold - a[1].gold))
-            .map(([resp, v]) => `
-              <tr>
-                <td>${escapeHtml(resp)}</td>
-                <td class="num">${v.gold ? formatGold(v.gold) : '<span class="muted">—</span>'}</td>
-                <td class="num">${v.rc ? formatRc(v.rc) : '<span class="muted">—</span>'}</td>
-              </tr>
-            `).join("")}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
 function renderDropsFilters(){
   const statuses = Array.from(new Set(DROPS.map(d => d.status).filter(Boolean)));
   const wrap = document.getElementById("drops-status-filter");
@@ -499,7 +448,6 @@ function openEditDropModal(uid){
 }
 
 function renderDrops(){
-  renderDropsTotals();
   const q = (document.getElementById("drops-search").value || "").toLowerCase().trim();
   const tbody = document.querySelector("#drops-table tbody");
   let filtered = DROPS.filter(d=>{
@@ -854,7 +802,7 @@ function renderGallery(){
 
   grid.innerHTML = filtered.map(name => `
     <div class="gallery-item">
-      ${itemIconHtml(name, 40)}
+      ${itemIconHtml(name, 80)}
       <div class="gname">${escapeHtml(name)}</div>
     </div>
   `).join("");
