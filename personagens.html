@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Personagens — Livro de Espólios</title>
+<title>Personagens — Party Infernum</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,9 +11,9 @@
 <div class="shell">
   <aside class="sidebar">
     <div class="brand">
-      <div class="sigil">⚜</div>
-      <div class="title">Livro de Espólios</div>
-      <div class="subtitle">registro da guild</div>
+      <div class="sigil">⚔</div>
+      <div class="title">Party Infernum</div>
+      <div class="subtitle">personagens &amp; times da guild</div>
     </div>
 
     <div class="toggle-group">
@@ -27,12 +27,8 @@
 
     <nav class="toc" id="toc">
       <a href="index.html">Início</a>
-      <a href="drops.html">Itens &amp; Drops <span class="count" id="cnt-drops"></span></a>
       <a href="personagens.html">Personagens <span class="count" id="cnt-chars"></span></a>
       <a href="times.html">Times &amp; Parties <span class="count" id="cnt-parties"></span></a>
-      <a href="cotacoes.html">Cotações</a>
-      <a href="rankings.html">Rankings</a>
-      <a href="referencia.html">Referência de Itens <span class="count" id="cnt-ref"></span></a>
     </nav>
 
     <div class="data-tools">
@@ -42,12 +38,18 @@
       <button class="tool-btn tool-btn-danger" id="btn-reset" type="button">Restaurar padrão</button>
       <input type="file" id="import-file-input" accept="application/json" style="display:none;">
     </div>
+
+    <div class="server-config">
+      <div class="server-config-label">Busca de level (Rubinot)</div>
+      <input type="text" id="server-url-input" placeholder="http://localhost:8080">
+      <div class="hint">Endereço do server.py local (com FlareSolverr rodando). Veja o README para configurar.</div>
+    </div>
   </aside>
 
   <main>
     <div class="page-header">
       <h1>Personagens</h1>
-      <p>Todos os chars da guild, com vocação, level e progresso em Primal Ordeal, Soulwar, Sanguine e Graveborn.</p>
+      <p>Todos os chars da guild, com vocação, level e progresso em Primal Ordeal, Soulwar, Sanguine e Graveborn. Use o botão 🌐 pra buscar o level atualizado direto do Rubinot.</p>
     </div>
 
     <div class="controls">
@@ -75,6 +77,7 @@
             <th>Sanguine</th>
             <th>Graveborn</th>
             <th class="edit-only-cell"></th>
+            <th>Buscar level</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -99,7 +102,7 @@
 </div>
 
 <footer>
-  Registro mantido pela guild · dados consolidados a partir da planilha de controle interno.
+  Party Infernum · registro de personagens e times mantido pela guild.
 </footer>
 
 <script src="data.js"></script>

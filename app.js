@@ -1,17 +1,6 @@
-// Renderização, filtros, edição e persistência do Livro de Espólios
+// Party Infernum — renderização, edição, persistência e busca de level (Rubinot)
 
 /* ================= HELPERS GERAIS ================= */
-
-function statusClass(status){
-  const s = (status||"").toLowerCase();
-  if(s.includes("vendido")) return "status-vendido";
-  if(s.includes("usando")) return "status-usando";
-  if(s.includes("venda")) return "status-avenda";
-  if(s.includes("pendente")) return "status-pendente";
-  if(s.includes("aberto")) return "status-aberto";
-  if(s.includes("trocado")) return "status-trocado";
-  return "status-none";
-}
 
 function escapeHtml(str){
   return String(str ?? "").replace(/[&<>"']/g, m => ({
@@ -19,39 +8,7 @@ function escapeHtml(str){
   }[m]));
 }
 
-/* ---------------- VALOR PARSING (para totais e ordenação) ----------------
-   Reconhece formatos como "7000rc", "150kk", "21k", "18.25k rc", "0".
-   "kk" = milhão de gold; "k" = mil de gold; "rc" = Rubini Coin (com "k rc" = mil de rc).
-*/
-function parseValor(raw){
-  if(!raw) return null;
-  const s = String(raw).trim();
-  const m = s.match(/^([\d]+(?:\.\d+)?)\s*(kk|k)?\s*(rc)?$/i);
-  if(!m) return null;
-  const num = parseFloat(m[1]);
-  const mult = m[2] ? m[2].toLowerCase() : null;
-  const isRc = !!m[3];
-  if(isRc){
-    const amount = mult === "k" ? num * 1000 : num;
-    return {currency:"rc", amount};
-  }
-  let amount;
-  if(mult === "kk") amount = num * 1000000;
-  else if(mult === "k") amount = num * 1000;
-  else amount = num;
-  return {currency:"gold", amount};
-}
-
-function formatGold(n){
-  if(n >= 1000000) return (n/1000000).toLocaleString("pt-BR", {maximumFractionDigits:2}) + "kk";
-  if(n >= 1000) return (n/1000).toLocaleString("pt-BR", {maximumFractionDigits:2}) + "k";
-  return n.toLocaleString("pt-BR");
-}
-function formatRc(n){
-  return n.toLocaleString("pt-BR") + " rc";
-}
-
-/* ---------------- IMAGENS DE ITENS ---------------- */
+/* ---------------- IMAGENS DE ITENS (usadas nas recompensas dos times) ---------------- */
 const IMG_BASE = "img/items/";
 
 function normalizeItemName(name){
@@ -74,22 +31,12 @@ function getItemImageFile(itemName){
   return ITEM_IMAGES_NORMALIZED[normalizeItemName(itemName)] || null;
 }
 
-function itemIconHtml(itemName, size){
-  size = size || 56;
-  const file = getItemImageFile(itemName);
-  if(file){
-    return `<img src="${IMG_BASE}${escapeHtml(file)}" alt="" class="item-icon" style="width:${size}px;height:${size}px;" loading="lazy">`;
-  }
-  return `<span class="item-icon-placeholder" style="width:${size}px;height:${size}px;"></span>`;
-}
-
 /* ================= PERSISTÊNCIA (localStorage) ================= */
-const STORAGE_KEY = "tibia-guild-data-v1";
+const STORAGE_KEY = "party-infernum-data-v1";
 let uidCounter = 1;
 function nextUid(){ return "u" + (uidCounter++); }
 
 function assignUids(){
-  DROPS.forEach(d => { if(!d._uid) d._uid = nextUid(); });
   CHARACTERS.forEach(c => { if(!c._uid) c._uid = nextUid(); });
   PARTIES.forEach(p => {
     if(!p._uid) p._uid = nextUid();
@@ -99,7 +46,7 @@ function assignUids(){
 
 function saveState(){
   try{
-    const payload = { DROPS, CHARACTERS, PARTIES };
+    const payload = { CHARACTERS, PARTIES };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch(e){
     console.warn("Não foi possível salvar no localStorage:", e);
@@ -114,7 +61,6 @@ function loadState(){
   let parsed;
   try{ parsed = JSON.parse(raw); }
   catch(e){ return; }
-  if(parsed.DROPS){ DROPS.length = 0; DROPS.push(...parsed.DROPS); }
   if(parsed.CHARACTERS){ CHARACTERS.length = 0; CHARACTERS.push(...parsed.CHARACTERS); }
   if(parsed.PARTIES){ PARTIES.length = 0; PARTIES.push(...parsed.PARTIES); }
 }
@@ -132,15 +78,12 @@ function exportData(){
     membros: membros.map(({_uid, ...m}) => m)
   }));
   const payload = {
-    DROPS: stripUid(DROPS),
     CHARACTERS: stripUid(CHARACTERS),
     PARTIES: strippedParties,
   };
-  const jsContent = `// Dados exportados do Livro de Espólios em ${new Date().toLocaleString("pt-BR")}
-// Substitua as seções DROPS, CHARACTERS e PARTIES no seu data.js por este conteúdo
-// (mantenha RATES, RATES_SERVERS, RANKINGS, ITEM_REFERENCE, ITEM_IMAGES e SHEET_USERS como estão).
-
-const DROPS = ${JSON.stringify(payload.DROPS, null, 2)};
+  const jsContent = `// Dados exportados do Party Infernum em ${new Date().toLocaleString("pt-BR")}
+// Substitua as seções CHARACTERS e PARTIES no seu data.js por este conteúdo
+// (mantenha ITEM_REFERENCE e ITEM_IMAGES como estão).
 
 const CHARACTERS = ${JSON.stringify(payload.CHARACTERS, null, 2)};
 
@@ -166,22 +109,19 @@ function importData(file){
       if(text.trim().startsWith("{")){
         parsed = JSON.parse(text);
       } else {
-        // tenta extrair objetos DROPS/CHARACTERS/PARTIES de um arquivo .js exportado
         parsed = {};
-        ["DROPS","CHARACTERS","PARTIES"].forEach(key=>{
+        ["CHARACTERS","PARTIES"].forEach(key=>{
           const re = new RegExp("const\\s+" + key + "\\s*=\\s*(\\[[\\s\\S]*?\\]);");
           const m = text.match(re);
           if(m){
-            // eslint-disable-next-line no-eval
             parsed[key] = JSON.parse(m[1]);
           }
         });
       }
-      if(!parsed.DROPS && !parsed.CHARACTERS && !parsed.PARTIES){
+      if(!parsed.CHARACTERS && !parsed.PARTIES){
         alert("Não foi possível reconhecer o arquivo. Use um arquivo exportado por este site (JSON ou .js).");
         return;
       }
-      if(parsed.DROPS){ DROPS.length = 0; DROPS.push(...parsed.DROPS); }
       if(parsed.CHARACTERS){ CHARACTERS.length = 0; CHARACTERS.push(...parsed.CHARACTERS); }
       if(parsed.PARTIES){ PARTIES.length = 0; PARTIES.push(...parsed.PARTIES); }
       assignUids();
@@ -196,7 +136,7 @@ function importData(file){
 }
 
 /* ================= MODO EDIÇÃO ================= */
-const EDIT_MODE_KEY = "tibia-guild-editmode";
+const EDIT_MODE_KEY = "party-infernum-editmode";
 let editMode = false;
 
 function setEditMode(on){
@@ -209,7 +149,7 @@ function setEditMode(on){
 }
 
 /* ================= MODO COMPACTO ================= */
-const COMPACT_MODE_KEY = "tibia-guild-compactmode";
+const COMPACT_MODE_KEY = "party-infernum-compactmode";
 let compactMode = false;
 
 function setCompactMode(on){
@@ -218,6 +158,65 @@ function setCompactMode(on){
   const toggleBtn = document.getElementById("compact-toggle");
   if(toggleBtn) toggleBtn.classList.toggle("active", compactMode);
   try{ localStorage.setItem(COMPACT_MODE_KEY, compactMode ? "1" : "0"); }catch(e){}
+}
+
+/* ================= CONFIG DO SERVIDOR (busca de level) ================= */
+const SERVER_URL_KEY = "party-infernum-server-url";
+const DEFAULT_SERVER_URL = "http://localhost:8080";
+
+function getServerUrl(){
+  let url;
+  try{ url = localStorage.getItem(SERVER_URL_KEY); }catch(e){}
+  return (url || DEFAULT_SERVER_URL).replace(/\/$/, "");
+}
+
+function setupServerConfig(){
+  const input = document.getElementById("server-url-input");
+  if(!input) return;
+  input.value = getServerUrl();
+  input.addEventListener("change", ()=>{
+    const val = input.value.trim() || DEFAULT_SERVER_URL;
+    try{ localStorage.setItem(SERVER_URL_KEY, val); }catch(e){}
+  });
+}
+
+/* ================= BUSCA DE LEVEL (Rubinot via servidor local) ================= */
+async function fetchCharacterLevel(uid){
+  const c = CHARACTERS.find(c => c._uid === uid);
+  if(!c || !c.nome){ return; }
+
+  const btnEl = document.getElementById("lvl-btn-" + uid);
+  const statusEl = document.getElementById("lvl-status-" + uid);
+  if(btnEl) btnEl.disabled = true;
+  if(statusEl){ statusEl.textContent = "Buscando…"; statusEl.className = "lvl-status"; }
+
+  try{
+    const res = await fetch(getServerUrl() + "/flare", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name: c.nome})
+    });
+    const data = await res.json();
+
+    if(data.error){
+      if(statusEl){ statusEl.textContent = "Erro: " + data.error; statusEl.className = "lvl-status err"; }
+    } else if(data.level){
+      const novoLevel = parseInt(data.level) || null;
+      if(novoLevel){
+        c.level = novoLevel;
+        saveState();
+        const cellEl = document.getElementById("lvl-cell-" + uid);
+        if(cellEl) cellEl.textContent = novoLevel;
+      }
+      if(statusEl){ statusEl.textContent = "Level encontrado: " + data.level; statusEl.className = "lvl-status ok"; }
+    } else {
+      if(statusEl){ statusEl.textContent = "Personagem não encontrado"; statusEl.className = "lvl-status err"; }
+    }
+  }catch(err){
+    if(statusEl){ statusEl.textContent = "Erro ao conectar ao servidor local"; statusEl.className = "lvl-status err"; }
+  } finally {
+    if(btnEl) btnEl.disabled = false;
+  }
 }
 
 /* ================= MODAL GENÉRICO ================= */
@@ -326,162 +325,10 @@ function setupModalChrome(){
     if(e.key === "Escape") closeModal();
   });
 
-  // datalist global para autocomplete de itens
   const datalist = document.createElement("datalist");
   datalist.id = "item-datalist";
   datalist.innerHTML = ITEM_REFERENCE.map(n => `<option value="${escapeHtml(n)}">`).join("");
   document.body.appendChild(datalist);
-}
-
-/* ================= DROPS ================= */
-let dropsStatusFilter = "todos";
-let dropsSort = {key:null, dir:1};
-
-const DROP_STATUSES = ["Vendido(a)","Usando","A Venda","Pendente","Aberto(a)","Trocado(a)"];
-
-function renderDropsFilters(){
-  const statuses = Array.from(new Set(DROPS.map(d => d.status).filter(Boolean)));
-  const wrap = document.getElementById("drops-status-filter");
-  const all = [["todos","Todos"]].concat(statuses.map(s => [s,s]));
-  wrap.innerHTML = all.map(([val,label]) =>
-    `<button class="chip ${val===dropsStatusFilter?'active':''}" data-status="${escapeHtml(val)}">${escapeHtml(label)}</button>`
-  ).join("");
-  wrap.querySelectorAll(".chip").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      dropsStatusFilter = btn.dataset.status;
-      renderDropsFilters();
-      renderDrops();
-    });
-  });
-}
-
-function parseDataBr(str){
-  if(!str) return -Infinity;
-  const m = String(str).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if(!m) return -Infinity;
-  return new Date(+m[3], +m[2]-1, +m[1]).getTime();
-}
-
-function sortDrops(list){
-  if(!dropsSort.key) return list;
-  const key = dropsSort.key, dir = dropsSort.dir;
-  return [...list].sort((a,b)=>{
-    let av, bv;
-    if(key === "id"){ av = a.id ?? -Infinity; bv = b.id ?? -Infinity; }
-    else if(key === "data"){ av = parseDataBr(a.data); bv = parseDataBr(b.data); }
-    else if(key === "valor"){
-      const pa = parseValor(a.valor), pb = parseValor(b.valor);
-      av = pa ? pa.amount : -Infinity;
-      bv = pb ? pb.amount : -Infinity;
-    } else {
-      av = (a[key] || "").toString().toLowerCase();
-      bv = (b[key] || "").toString().toLowerCase();
-    }
-    if(av < bv) return -1 * dir;
-    if(av > bv) return 1 * dir;
-    return 0;
-  });
-}
-
-function updateSortHeaders(tableId, sortState){
-  document.querySelectorAll(`#${tableId} thead th.sortable`).forEach(th=>{
-    th.classList.remove("sort-asc","sort-desc");
-    const arrow = th.querySelector(".arrow");
-    if(th.dataset.key === sortState.key){
-      th.classList.add(sortState.dir === 1 ? "sort-asc" : "sort-desc");
-      if(arrow) arrow.textContent = sortState.dir === 1 ? "▲" : "▼";
-    } else if(arrow){
-      arrow.textContent = "▲";
-    }
-  });
-}
-
-function dropFields(){
-  return [
-    {key:"item", label:"Item", type:"item", placeholder:"Ex: Soulbleeder"},
-    {key:"servidor", label:"Servidor", type:"text", placeholder:"Ex: Grimoria II [Malveria]"},
-    {key:"origem", label:"Origem", type:"text", placeholder:"Ex: Soulwar [chest]"},
-    {key:"resp", label:"Responsável", type:"text", placeholder:"Ex: PT, Alif, Rafa…"},
-    {key:"data", label:"Data (dd/mm/aaaa)", type:"text", placeholder:"10/09/2026"},
-    {key:"status", label:"Status", type:"select", options:["", ...DROP_STATUSES]},
-    {key:"valor", label:"Valor", type:"text", placeholder:"Ex: 150kk, 7000rc"},
-    {key:"obs", label:"Comentários", type:"textarea"},
-  ];
-}
-
-function openAddDropModal(){
-  openModal({
-    title: "Adicionar item",
-    fields: dropFields(),
-    values: {},
-    onSave: (vals)=>{
-      const maxId = DROPS.reduce((m,d)=> d.id && d.id > m ? d.id : m, 0);
-      DROPS.push({ id: maxId + 1, _uid: nextUid(), ...vals });
-      saveState();
-      renderDrops();
-      renderStats();
-    }
-  });
-}
-
-function openEditDropModal(uid){
-  const drop = DROPS.find(d => d._uid === uid);
-  if(!drop) return;
-  openModal({
-    title: "Editar item",
-    fields: dropFields(),
-    values: drop,
-    onSave: (vals)=>{
-      Object.assign(drop, vals);
-      saveState();
-      renderDrops();
-      renderStats();
-    },
-    onDelete: ()=>{
-      const idx = DROPS.findIndex(d => d._uid === uid);
-      if(idx > -1) DROPS.splice(idx, 1);
-      saveState();
-      renderDrops();
-      renderStats();
-    }
-  });
-}
-
-function renderDrops(){
-  const q = (document.getElementById("drops-search").value || "").toLowerCase().trim();
-  const tbody = document.querySelector("#drops-table tbody");
-  let filtered = DROPS.filter(d=>{
-    if(dropsStatusFilter !== "todos" && d.status !== dropsStatusFilter) return false;
-    if(!q) return true;
-    const hay = [d.item, d.servidor, d.origem, d.resp, d.status, d.valor, d.obs].join(" ").toLowerCase();
-    return hay.includes(q);
-  });
-  filtered = sortDrops(filtered);
-  updateSortHeaders("drops-table", dropsSort);
-
-  document.getElementById("drops-empty").style.display = filtered.length ? "none" : "block";
-
-  tbody.innerHTML = filtered.map(d => `
-    <tr>
-      <td class="num muted">${d.id ?? "—"}</td>
-      <td>${itemIconHtml(d.item)}</td>
-      <td>${escapeHtml(d.item)}</td>
-      <td class="muted">${escapeHtml(d.servidor)}</td>
-      <td>${escapeHtml(d.origem)}</td>
-      <td>${escapeHtml(d.resp) || '<span class="muted">—</span>'}</td>
-      <td class="muted">${escapeHtml(d.data) || "—"}</td>
-      <td>${d.status ? `<span class="status-pill ${statusClass(d.status)}">${escapeHtml(d.status)}</span>` : '<span class="muted">—</span>'}</td>
-      <td>${escapeHtml(d.valor) || '<span class="muted">—</span>'}</td>
-      <td class="muted">${escapeHtml(d.obs) || "—"}</td>
-      <td class="edit-only-cell">
-        <button class="icon-btn" data-edit-drop="${d._uid}" title="Editar">✎</button>
-      </td>
-    </tr>
-  `).join("");
-
-  tbody.querySelectorAll("[data-edit-drop]").forEach(btn=>{
-    btn.addEventListener("click", ()=> openEditDropModal(btn.dataset.editDrop));
-  });
 }
 
 /* ================= CHARACTERS ================= */
@@ -589,7 +436,7 @@ function renderChars(){
       <td class="muted">${escapeHtml(c.servidor) || "—"}</td>
       <td class="muted">${escapeHtml(c.conta) || "—"}</td>
       <td>${escapeHtml(c.voc) || '<span class="muted">—</span>'}</td>
-      <td class="num">${c.level ?? '<span class="muted">—</span>'}</td>
+      <td class="num" id="lvl-cell-${c._uid}">${c.level ?? '<span class="muted">—</span>'}</td>
       <td class="muted">${escapeHtml(c.primal) || "—"}</td>
       <td>${flagCell(c.soulwar)}</td>
       <td>${flagCell(c.sanguine)}</td>
@@ -597,11 +444,20 @@ function renderChars(){
       <td class="edit-only-cell">
         <button class="icon-btn" data-edit-char="${c._uid}" title="Editar">✎</button>
       </td>
+      <td>
+        <div class="lvl-cell">
+          <button class="lvl-fetch-btn" id="lvl-btn-${c._uid}" data-fetch-level="${c._uid}" title="Buscar level no Rubinot">🌐 Buscar</button>
+          <span class="lvl-status" id="lvl-status-${c._uid}"></span>
+        </div>
+      </td>
     </tr>
   `).join("");
 
   tbody.querySelectorAll("[data-edit-char]").forEach(btn=>{
     btn.addEventListener("click", ()=> openEditCharModal(btn.dataset.editChar));
+  });
+  tbody.querySelectorAll("[data-fetch-level]").forEach(btn=>{
+    btn.addEventListener("click", ()=> fetchCharacterLevel(btn.dataset.fetchLevel));
   });
 }
 
@@ -752,62 +608,6 @@ function renderParties(){
   });
 }
 
-/* ================= RATES ================= */
-function fmtNumber(n){
-  return n.toLocaleString("pt-BR");
-}
-
-function renderRates(){
-  const head = document.getElementById("rates-head");
-  head.innerHTML = "<th>Moeda</th>" + RATES_SERVERS.map(s => `<th class="num" colspan="2">${escapeHtml(s)}</th>`).join("");
-
-  const subHeadRow = document.createElement("tr");
-  subHeadRow.innerHTML = "<th></th>" + RATES_SERVERS.map(()=>`<th class="num">Venda</th><th class="num">Compra</th>`).join("");
-  document.querySelector("#rates-table thead").appendChild(subHeadRow);
-
-  const tbody = document.querySelector("#rates-table tbody");
-  tbody.innerHTML = RATES.map(r => `
-    <tr>
-      <td><strong>${escapeHtml(r.moeda)}</strong></td>
-      ${RATES_SERVERS.map(s => {
-        const v = r.valores[s];
-        if(!v) return '<td class="num muted">—</td><td class="num muted">—</td>';
-        return `<td class="num">${fmtNumber(v.venda)}</td><td class="num muted">${fmtNumber(v.compra)}</td>`;
-      }).join("")}
-    </tr>
-  `).join("");
-}
-
-/* ================= RANKINGS ================= */
-function renderRankings(){
-  const tbody = document.querySelector("#rankings-table tbody");
-  tbody.innerHTML = RANKINGS.map(r => `
-    <tr>
-      <td>${escapeHtml(r.servidor)}</td>
-      <td>${escapeHtml(r.topLevel) || '<span class="muted">—</span>'}</td>
-      <td>${escapeHtml(r.mvDrop) || '<span class="muted">—</span>'}</td>
-      <td>${escapeHtml(r.lessDeaths) || '<span class="muted">—</span>'}</td>
-      <td>${escapeHtml(r.topAvgDrop) || '<span class="muted">—</span>'}</td>
-      <td>${escapeHtml(r.goldenDrop) || '<span class="muted">—</span>'}</td>
-    </tr>
-  `).join("");
-}
-
-/* ================= GALERIA DE ITENS ================= */
-function renderGallery(){
-  const q = (document.getElementById("ref-search").value || "").toLowerCase().trim();
-  const grid = document.getElementById("ref-gallery");
-  const filtered = ITEM_REFERENCE.filter(name => !q || name.toLowerCase().includes(q));
-  document.getElementById("ref-empty").style.display = filtered.length ? "none" : "block";
-
-  grid.innerHTML = filtered.map(name => `
-    <div class="gallery-item">
-      ${itemIconHtml(name, 80)}
-      <div class="gname">${escapeHtml(name)}</div>
-    </div>
-  `).join("");
-}
-
 /* ================= STATS + NAV ================= */
 function setText(id, value){
   const el = document.getElementById(id);
@@ -815,21 +615,12 @@ function setText(id, value){
 }
 
 function renderStats(){
-  setText("stat-drops", DROPS.length);
-  setText("stat-sold", DROPS.filter(d => (d.status||"").includes("Vendido")).length);
   setText("stat-chars", CHARACTERS.length);
   setText("stat-parties", PARTIES.length);
-
-  setText("cnt-drops", DROPS.length);
   setText("cnt-chars", CHARACTERS.length);
   setText("cnt-parties", PARTIES.length);
-  setText("cnt-ref", ITEM_REFERENCE.length);
-
-  // cards da página inicial (se existirem)
-  setText("cnt-drops-card", DROPS.length);
   setText("cnt-chars-card", CHARACTERS.length);
   setText("cnt-parties-card", PARTIES.length);
-  setText("cnt-ref-card", ITEM_REFERENCE.length);
 }
 
 function setupActiveNav(){
@@ -845,13 +636,8 @@ function setupActiveNav(){
 /* ================= RENDER ALL ================= */
 function renderAll(){
   renderStats();
-  if(document.getElementById("drops-table")){
-    renderDropsFilters();
-    renderDrops();
-  }
   if(document.getElementById("chars-table")) renderChars();
   if(document.getElementById("parties-grid")) renderParties();
-  if(document.getElementById("ref-gallery")) renderGallery();
 }
 
 /* ================= INIT ================= */
@@ -862,23 +648,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   setupModalChrome();
   setupActiveNav();
+  setupServerConfig();
 
   renderStats();
-
-  if(document.getElementById("drops-table")){
-    renderDropsFilters();
-    renderDrops();
-    document.getElementById("drops-search").addEventListener("input", renderDrops);
-    document.querySelectorAll("#drops-table thead th.sortable").forEach(th=>{
-      th.addEventListener("click", ()=>{
-        const key = th.dataset.key;
-        dropsSort.dir = (dropsSort.key === key) ? -dropsSort.dir : 1;
-        dropsSort.key = key;
-        renderDrops();
-      });
-    });
-    document.getElementById("btn-add-drop").addEventListener("click", openAddDropModal);
-  }
 
   if(document.getElementById("chars-table")){
     renderChars();
@@ -891,19 +663,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     renderParties();
     document.getElementById("parties-search").addEventListener("input", renderParties);
     document.getElementById("btn-add-party").addEventListener("click", openAddPartyModal);
-  }
-
-  if(document.getElementById("rates-table")){
-    renderRates();
-  }
-
-  if(document.getElementById("rankings-table")){
-    renderRankings();
-  }
-
-  if(document.getElementById("ref-gallery")){
-    renderGallery();
-    document.getElementById("ref-search").addEventListener("input", renderGallery);
   }
 
   const editToggleBtn = document.getElementById("edit-toggle");

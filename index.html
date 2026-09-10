@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Início — Livro de Espólios</title>
+<title>Início — Party Infernum</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,9 +11,9 @@
 <div class="shell">
   <aside class="sidebar">
     <div class="brand">
-      <div class="sigil">⚜</div>
-      <div class="title">Livro de Espólios</div>
-      <div class="subtitle">registro da guild</div>
+      <div class="sigil">⚔</div>
+      <div class="title">Party Infernum</div>
+      <div class="subtitle">personagens &amp; times da guild</div>
     </div>
 
     <div class="toggle-group">
@@ -27,12 +27,8 @@
 
     <nav class="toc" id="toc">
       <a href="index.html">Início</a>
-      <a href="drops.html">Itens &amp; Drops <span class="count" id="cnt-drops"></span></a>
       <a href="personagens.html">Personagens <span class="count" id="cnt-chars"></span></a>
       <a href="times.html">Times &amp; Parties <span class="count" id="cnt-parties"></span></a>
-      <a href="cotacoes.html">Cotações</a>
-      <a href="rankings.html">Rankings</a>
-      <a href="referencia.html">Referência de Itens <span class="count" id="cnt-ref"></span></a>
     </nav>
 
     <div class="data-tools">
@@ -42,51 +38,35 @@
       <button class="tool-btn tool-btn-danger" id="btn-reset" type="button">Restaurar padrão</button>
       <input type="file" id="import-file-input" accept="application/json" style="display:none;">
     </div>
+
+    <div class="server-config">
+      <div class="server-config-label">Busca de level (Rubinot)</div>
+      <input type="text" id="server-url-input" placeholder="http://localhost:8080">
+      <div class="hint">Endereço do server.py local (com FlareSolverr rodando). Veja o README para configurar.</div>
+    </div>
   </aside>
 
   <main>
     <div class="hero">
-      <div class="kicker">Grimoria II · Spectrum · Malveria</div>
-      <h1>O espólio da guild,<br>página por página.</h1>
-      <p>Todo item retirado, vendido, trocado ou ainda guardado — junto dos personagens, times e taxas de câmbio que movem a economia entre servidores.</p>
+      <div class="kicker">Guild · Rubinot</div>
+      <h1>Party Infernum</h1>
+      <p>Personagens e times da guild, organizados num só lugar — com busca automática de level direto do Rubinot.</p>
       <div class="stats">
-        <div class="stat"><b id="stat-drops">–</b><span>itens registrados</span></div>
-        <div class="stat"><b id="stat-sold">–</b><span>vendidos</span></div>
         <div class="stat"><b id="stat-chars">–</b><span>personagens</span></div>
         <div class="stat"><b id="stat-parties">–</b><span>times ativos</span></div>
       </div>
     </div>
 
     <div class="nav-grid">
-      <a class="nav-card" href="drops.html">
-        <span class="nav-card-icon">⚔</span>
-        <h3>Itens &amp; Drops <span class="count" id="cnt-drops-card"></span></h3>
-        <p>Cada item retirado de baú, quest ou hunt — origem, responsável, status e valor de venda.</p>
-      </a>
       <a class="nav-card" href="personagens.html">
         <span class="nav-card-icon">🧙</span>
         <h3>Personagens <span class="count" id="cnt-chars-card"></span></h3>
-        <p>Todos os chars da guild, vocação, level e progresso em Primal, Soulwar, Sanguine e Graveborn.</p>
+        <p>Todos os chars da guild — vocação, level, progresso em conteúdos, e busca automática de level no Rubinot.</p>
       </a>
       <a class="nav-card" href="times.html">
         <span class="nav-card-icon">🛡</span>
         <h3>Times &amp; Parties <span class="count" id="cnt-parties-card"></span></h3>
         <p>Composição das parties por servidor e o que cada membro já garantiu nos conteúdos.</p>
-      </a>
-      <a class="nav-card" href="cotacoes.html">
-        <span class="nav-card-icon">💰</span>
-        <h3>Cotações</h3>
-        <p>Preços de compra e venda de Rubini Coin, Bleeder, Tainter e Soulstalker entre servidores.</p>
-      </a>
-      <a class="nav-card" href="rankings.html">
-        <span class="nav-card-icon">🏅</span>
-        <h3>Rankings</h3>
-        <p>Destaques por servidor: maior level, melhor drop, menos mortes e maior valor médio.</p>
-      </a>
-      <a class="nav-card" href="referencia.html">
-        <span class="nav-card-icon">📖</span>
-        <h3>Referência de Itens <span class="count" id="cnt-ref-card"></span></h3>
-        <p>Catálogo visual com o ícone de cada item já visto pela guild.</p>
       </a>
     </div>
   </main>
@@ -107,7 +87,7 @@
 </div>
 
 <footer>
-  Registro mantido pela guild · dados consolidados a partir da planilha de controle interno.
+  Party Infernum · registro de personagens e times mantido pela guild.
 </footer>
 
 <script src="data.js"></script>

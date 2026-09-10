@@ -331,9 +331,6 @@
   body.compact-mode .table-wrap{font-size:12px;}
   body.compact-mode .party-card{padding:12px 14px;}
   body.compact-mode .member{padding:5px 0;}
-  body.compact-mode .gallery-grid{grid-template-columns:repeat(auto-fill, minmax(90px, 1fr)); gap:8px;}
-  body.compact-mode .gallery-item{padding:10px 6px 8px;}
-  body.compact-mode .gallery-item img{width:28px; height:28px; margin-bottom:5px;}
 
   .data-tools{
     margin-top:26px;
@@ -416,30 +413,6 @@
     background:var(--bg-panel-2);
   }
 
-  /* ---------- gallery ---------- */
-  .gallery-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
-    gap:14px;
-  }
-  .gallery-item{
-    border:1px solid var(--line);
-    background:var(--bg-panel);
-    padding:16px 10px 12px;
-    text-align:center;
-    transition:border-color .15s, background .15s;
-  }
-  .gallery-item:hover{border-color:var(--line-bright); background:var(--bg-panel-2);}
-  .gallery-item img{
-    width:80px; height:80px;
-    image-rendering:pixelated;
-    margin-bottom:8px;
-  }
-  .gallery-item .gname{
-    font-size:11.5px;
-    color:var(--ink-dim);
-    line-height:1.3;
-  }
 
   /* ---------- modal ---------- */
   .modal-overlay{
@@ -576,7 +549,7 @@
   .party-empty{color:var(--ash); font-style:italic; font-size:13px; padding:6px 0;}
 
   /* ---------- rates ---------- */
-  .rate-note{font-size:12.5px; color:var(--ash); margin-top:10px; font-style:italic;}
+
 
   footer{
     padding:32px 56px 60px;
@@ -646,4 +619,58 @@
   color:var(--ink-dim);
   font-size:15.5px;
   margin:0;
+}
+
+/* ---------- busca de level (Rubinot) ---------- */
+.lvl-cell{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.lvl-fetch-btn{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--ink-dim);
+  padding:4px 9px;
+  font-size:11.5px;
+  border-radius:2px;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all .15s;
+}
+.lvl-fetch-btn:hover{border-color:var(--gold); color:var(--gold-bright);}
+.lvl-fetch-btn:disabled{opacity:0.5; cursor:default;}
+.lvl-status{
+  font-size:11px;
+  color:var(--ash);
+  font-style:italic;
+  white-space:nowrap;
+}
+.lvl-status.ok{color:#9fd08a;}
+.lvl-status.err{color:#e29a9a;}
+
+/* ---------- painel de config (servidor de busca) ---------- */
+.server-config{
+  margin-top:8px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.server-config-label{
+  font-family:'Cinzel',serif;
+  font-size:10.5px;
+  letter-spacing:0.05em;
+  color:var(--ash);
+  margin-bottom:6px;
+}
+.server-config input[type="text"]{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:7px 9px;
+  font-family:'Spectral',serif;
+  font-size:12px;
+  border-radius:2px;
+  margin-bottom:6px;
+}
+.server-config .hint{
+  font-size:10.5px;
+  color:var(--ash);
+  line-height:1.4;
 }
